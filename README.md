@@ -7,7 +7,7 @@
 
 前台效果图
 
-![](.\photos\1.jpg)
+![](./photos/1.jpg)
 
 ![](.\photos\2.png)
 
