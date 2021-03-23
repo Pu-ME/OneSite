@@ -9,13 +9,13 @@
 
 ![](./photos/1.jpg)
 
-![](.\photos\2.png)
+![](./photos/2.png)
 
 后台效果图
 
-![](.\photos\3.png)
+![](./photos/3.png)
 
-![](.\photos\4.png)
+![](./photos/4.png)
 
 
 ## 项目地址
