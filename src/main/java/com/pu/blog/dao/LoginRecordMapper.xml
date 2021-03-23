@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pu.blog.dao.LoginRecordMapper">
+	<resultMap type="com.pu.blog.model.entity.LoginRecord" id="loginRecordMap">
+		<id column="id" property="id" />
+		<result column="username" property="username" />
+		<result column="ip" property="ip" />
+		<result column="createtime" property="createtime" />
+	</resultMap>
+	
+	<select id="selectLatestRecord" resultMap="loginRecordMap">
+		select *
+		from loginrecord
+		order by createtime desc
+		limit 5
+	</select>
+	<!-- 查询所有记录 -->
+	<select id="selectLoginRecordlist" resultMap="loginRecordMap">
+		select * from
+		loginRecord ORDER BY createtime desc
+	</select>
+	<!-- 添加登录记录 -->
+	<insert id="insertLoginRecord">
+		INSERT INTO loginrecord
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="username!=null and username!=''">username,</if>
+			<if test="ip!=null and ip!=''">ip,</if>
+			<if test="createtime!=null">createtime,</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="username!=null and username!=''">#{username},</if>
+			<if test="ip!=null and ip!=''">#{ip},</if>
+			<if test="createtime!=null">#{createtime},</if>
+		</trim>
+	</insert>
+
+</mapper>

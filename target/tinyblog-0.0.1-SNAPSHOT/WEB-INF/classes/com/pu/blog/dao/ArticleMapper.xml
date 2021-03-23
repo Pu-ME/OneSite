@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pu.blog.dao.ArticleMapper">
+	<resultMap type="com.pu.blog.model.entity.Article" id="articleMap">
+		<id column="id" property="id" />
+		<result column="title" property="title" />
+		<result column="summary" property="summary" />
+		<result column="content" property="content" />
+		<result column="createTime" property="createTime" />
+		<result column="updateTime" property="updateTime" />
+		<result column="categoryId" property="categoryId" />
+		<result column="userId" property="userId" />
+		<result column="views" property="views" />
+		<result column="status" property="status" />
+		<association property="category" javaType="com.pu.blog.model.entity.Category">
+			<id column="categoryId" property="id" />
+			<result column="categoryName" property="categoryName" />
+		</association>
+		<association property="user" javaType="com.pu.blog.model.entity.User">
+			<id column="userId" property="id" />
+			<result column="nickname" property="nickname" />
+		</association>
+	</resultMap>
+
+
+	<resultMap type="com.pu.blog.model.dto.ArticleDto" id="articleDtoMap">
+		<id column="id" property="id" />
+		<result column="title" property="title" />
+		<result column="summary" property="summary" />
+		<result column="categoryId" property="categoryId" />
+		<result column="categoryName" property="categoryName" />
+		<result column="userId" property="userId" />
+		<result column="createtime" property="createtime" />
+	</resultMap>
+
+	<resultMap type="com.pu.blog.model.dto.ArchiveDto" id="archiveDtoMap">
+		<result column="year" property="year" />
+		<result column="month" property="month" />
+		<result column="count" property="count" />
+	</resultMap>
+	<!-- 根据年份查询文章 -->
+	<select id="selectArticleDtoByYear" resultMap="articleDtoMap">
+		SELECT
+		id,title,createtime,YEAR(createtime) AS YEAR FROM article WHERE status=1 AND
+		YEAR(createtime)=#{year} ORDER BY createtime DESC
+	</select>
+	<!-- 根据年份和月份查询文章 -->
+	<select id="selectArticleDtoByYearAndMonth" resultMap="articleDtoMap">
+		SELECT
+		id,title,createtime,YEAR(createtime) AS YEAR,MONTH(createtime) AS MONTH FROM
+		article WHERE status=1 AND YEAR(createtime)=#{year} AND
+		MONTH(createtime)=#{month} ORDER BY createtime DESC
+	</select>
+
+	<!-- 查询文章归档信息 根据年份 -->
+	<select id="selectGroupByYear" resultMap="archiveDtoMap">
+		SELECT YEAR(createtime)
+		AS YEAR,COUNT(*) AS COUNT FROM article WHERE status=1 GROUP BY
+		YEAR(createtime) ORDER BY YEAR DESC
+	</select>
+
+	<!-- 查询归档信息 根据年份和月份 -->
+	<select id="selectGroupByYearAndMonth" resultMap="archiveDtoMap">
+		SELECT
+		YEAR(createtime) AS YEAR,MONTH(createtime) AS MONTH,COUNT(*) AS COUNT
+		FROM article WHERE status=1 GROUP BY
+		YEAR(createtime),MONTH(createtime) ORDER BY YEAR DESC,MONTH DESC
+	</select>
+
+	<!-- 获得最新文章 -->
+	<select id="selectLatestArticle" resultMap="articleMap">
+		select id,title,status,createTime
+		from article
+		<where>
+			<if test="status!=null">status=#{status}</if>
+		</where>
+		order by createtime desc
+		limit 5
+	</select>
+
+	<!-- 获得随机文章 -->
+	<select id="selectRandArticle" resultMap="articleMap">
+		select id,title,views
+		from article
+		where status=1
+		order by RAND()
+		limit 5
+	</select>
+
+	<!-- 获得访问量较高的文章 -->
+	<select id="selectArticleByViews" resultMap="articleMap">
+		select
+		id,title,views
+		from article
+		where status=1
+		order by views desc
+		limit 5
+	</select>
+
+	<!-- 统计所有文章阅读量 -->
+	<select id="countViewAllArticle" resultType="int">
+		select SUM(views)
+		from article
+	</select>
+
+	<!-- 统计文章数量 -->
+	<select id="countArticleByStatus" resultType="int">
+		select count(*)
+		from article
+		<where>
+			<if test="status!=null">status=#{status}</if>
+		</where>
+	</select>
+
+	<!-- 统计删除分类下的文章数目 -->
+	<select id="countByCategoryIds" resultType="int">
+		SELECT
+		COUNT(*)
+		FROM
+		article
+		WHERE
+		categoryId IN
+		<foreach collection="list" index="index" item="item" open="("
+			separator="," close=")">
+			#{item}
+		</foreach>
+	</select>
+	<!-- 修改文章 -->
+	<update id="updateArticle">
+		update article
+		<set>
+			<if test="title!=null and title!=''">title=#{title},</if>
+			<if test="content!=null and content!=''">content=#{content},</if>
+			<if test="summary!=null and summary!=''">summary=#{summary},</if>
+			<if test="updateTime!=null and updateTime!=''">updateTime=#{updateTime},</if>
+			<if test="categoryId!=null and categoryId!=''">categoryId=#{categoryId},</if>
+			<if test="status!=null and status!=''">status=#{status},</if>
+		</set>
+		where id = #{id}
+	</update>
+	<!-- 通过id删除文章 -->
+	<delete id="deleteById">
+		DELETE FROM article WHERE id = #{id}
+	</delete>
+	<!-- 通过id查询文章 -->
+	<select id="selectArticleById" resultMap="articleMap">
+		SELECT
+		a.id,
+		a.title,
+		a.summary,
+		a.content,
+		a.createTime,
+		a.updateTime,
+		a.categoryId,
+		a.views,
+		a.status,
+		c.categoryName,
+		a.userId,
+		u.nickname
+		FROM
+		article a,
+		category c,
+		user u
+		WHERE
+		a.categoryId = c.id
+		and a.userId = u.id
+		<if test="status!=null and status!=''">AND a.status=#{status}</if>
+		AND a.id = #{id}
+	</select>
+	<!-- 查询所有文章 -->
+	<select id="selectArticleList" resultMap="articleMap">
+		SELECT
+		a.id,
+		a.title,
+		a.summary,
+		a.content,
+		a.createTime,
+		a.categoryId,
+		a.views,
+		a.status,
+		c.categoryName,
+		a.userId,
+		u.nickname
+		FROM
+		article a,
+		category c,
+		user u
+		WHERE a.categoryId = c.id
+		and a.userId = u.id
+		<if test="status!=null and status!=''">AND a.status=#{status}</if>
+		<if test="categoryId!=null and categoryId!=''">AND a.categoryId=#{categoryId}</if>
+		<if test="keywords!=null and keywords!=''">AND a.title LIKE CONCAT('%',#{keywords},'%')</if>
+		ORDER BY createTime desc
+	</select>
+
+	<!-- 查询所有文章 返回前台 -->
+	<select id="selectArticleDtoList" resultMap="articleDtoMap">
+		SELECT
+		a.id,
+		a.title,
+		a.summary,
+		a.categoryId,
+		c.categoryName,
+		a.userId
+		FROM
+		article a,
+		category c
+		WHERE a.categoryId = c.id
+		<if test="status!=null and status!=''">AND a.status=#{status}</if>
+		<if test="categoryId!=null and categoryId!=''">AND a.categoryId=#{categoryId}</if>
+		<if test="keywords!=null and keywords!=''">AND a.title LIKE CONCAT('%',#{keywords},'%')</if>
+		ORDER BY createTime desc
+	</select>
+
+
+	<!-- 新增文章 -->
+	<insert id="insertArticle">
+		INSERT INTO article
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="title!=null and title!='' ">title,</if>
+			<if test="summary!=null and summary!=''">summary,</if>
+			<if test="content!=null and content!=''">content,</if>
+			<if test="createTime!=null and createTime!=''">createTime,</if>
+			<if test="updateTime!=null and updateTime!=''">updateTime,</if>
+			<if test="categoryId!=null and categoryId!='' ">categoryId,</if>
+			<if test="userId!=null and userId!='' ">userId,</if>
+			<if test="views!=null and views!=''">views,</if>
+			<if test="status!=null and status!=''">status,</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="title!=null and title!='' ">#{title},</if>
+			<if test="summary!=null and summary!=''">#{summary},</if>
+			<if test="content!=null and content!=''">#{content},</if>
+			<if test="createTime!=null and createTime!=''">#{createTime},</if>
+			<if test="updateTime!=null and updateTime!=''">#{updateTime},</if>
+			<if test="categoryId!=null and categoryId!='' ">#{categoryId},</if>
+			<if test="userId!=null and userId!='' ">#{userId},</if>
+			<if test="views!=null and views!=''">#{views},</if>
+			<if test="status!=null and status!=''">#{status},</if>
+		</trim>
+	</insert>
+
+</mapper>
